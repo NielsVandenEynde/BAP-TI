@@ -1,0 +1,85 @@
+%---------- Inleiding ---------------------------------------------------------
+
+\section{Introductie} % The \section*{} command stops section numbering
+\label{sec:introductie}
+
+Tegenwoordig zie je het meer en meer. Denk maar aan de hele crypto gekte. 
+Wanneer je een account aanmaakt bij een 'exchange' (een plaats waar je cryptomunten kan kopen), zal je verplicht worden om je account te verifiëren alvorens je effectief aan de slag kan gaan. Deze verificatie gebeurt vaak aan de hand van een identiteitsbewijs dat je moet uploaden. Vervolgens gaan allerlei algoritmen hier de relevante gegevens uithalen, controleren op vervalsing, en kijken of de naam waarop het account staat effectief overeen komt met de naam die op je document staat.
+
+Net hier komt het probleem waarvoor in deze bachelorproef naar oplossingen wordt gezocht naar boven. Namelijk de menselijke, zwakke schakel. Een foto nemen van een document lijkt een eenvoudige opgave, echter wanneer een computer deze foto analyseert, is er weinig ruimte voor imperfecties. Een foto met vlekken, overbelichting, of een die 'skewed' is al snel bijna compleet onleesbaar door OCR software. 
+
+Zo komen we bij docbyte, dit bedrijf wilt alles dat met documenten te maken heeft automatiseren. Hier is uiteraard van het grootste belang dat onze afbeelding effectief als tekst kan worden opgeslagen. Een vereiste hiervoor is dat de afbeelding zo goed mogelijk wordt gepre-processed zodat de OCR het grootste deel van alle woorden kan interpreteren. De rest kan dan eventueel voorspeld worden door iets als GPT-3.
+
+Momenteel worden er enkele tools van derde partijen gebruikt, met verschillende maten van succes. Wat in deze bachelorproef bereikt wil worden is kijken of zoiets niet 'in-house' gedaan kan worden. Bovendien zou het ook erg nuttig zijn om te weten of dit economisch zin heeft voor een bedrijf.  
+\begin{itemize}
+	\item  Hoe goed presteren deze zelfgemaakte oplossingen?
+	\item  Kan er op rekenkracht of executietijd bespaard worden door deze classificatie uit te voeren?
+	\item  Hoe complex is zo'n oplossing en wat is de kost?
+\end{itemize}
+
+
+Deze bachelorproef zal zich bezig houden met het zoeken naar antwoorden op bovenstaande onderzoeksvragen.
+
+%---------- Stand van zaken ---------------------------------------------------
+
+\section{State-of-the-art}
+\label{sec:state-of-the-art}
+ 
+Eerst wil ik het hebben over hoe image pre-processing ten behoeve van OCR in de praktijk vaak wordt gedaan. Als eerste zal de afbeelding naar greyscale worden omgezet. Nadien zal er op basis van een threshold een conversie gemaakt worden zodat elke pixel een 0 of een 1 is (0 voor zwart, 1 voor wit). Alle waarden onder deze drempel worden als 0 beschouwd en het omgekeerd voor 1. Vaak is dit een adaptieve threshold die zich aanpast aan het stukje van de afbeelding. Verder worden er correcties uitgevoerd voor 'skedwedness', nadien blur correction enzovoort. Hierna wordt er een score gegeven op de accuracy die de OCR software behaald. Deze hele pipeline wordt dan herhaald totdat de accuracy een acceptabele waarde heeft. Een implementatie van dit proces is beschreven in een talk op pycon enkele jaren geleden. \autocite{Chastagnol1954}
+
+
+Dit is meestal waar men stopt. 
+Tijdens mijn literatuurstudie ben ik niet veel onderzoeken tegengekomen die een gelijkaardige invalshoek als deze bachelorproef hadden. Zo was er bijvoorbeeld wel een artikel over een binaire classifier die simpelweg oordeelde of het een goede of slechte afbeelding was.
+
+Dit onderzoek tracht echter nog een stap verder te gaan. We kiezen om door middel van de classificatie van fouten de pipeline aan te passen zodat deze enkel de correcties uitvoert die nodig zijn. Hierna kijken we naar de snelheidswinst die we boeken.
+
+Wel hebben we nog het volgende artikel dat geschreven is door iemand die werkt voor een bedrijf dat zich specialiseert in 'intelligent data processing'. Dit is iets wat OCR eigenlijk 'vervangt' volgens de auteur. Volgens dit artikel is het niet zo nuttig om deep learning te gebruiken omdat er betere tools zijn om deze fouten uit de afbeeldingen te halen. \autocite{Clark2002}. Zo kan je bijvoorbeeld perfect de 'skew' berekenen met een traditioneel algoritme. \autocite{Hull2011}.
+
+
+%Hier beschrijf je de \emph{state-of-the-art} rondom je gekozen onderzoeksdomein. Dit kan bijvoorbeeld een literatuurstudie zijn. Je mag de titel van deze sectie ook aanpassen (literatuurstudie, stand van zaken, enz.). Zijn er al gelijkaardige onderzoeken gevoerd? Wat concluderen ze? Wat is het verschil met jouw onderzoek? Wat is de relevantie met jouw onderzoek?
+
+%Verwijs bij elke introductie van een term of bewering over het domein naar de vakliteratuur, bijvoorbeeld~\autocite{Doll1954}! Denk zeker goed na welke werken je refereert en waarom.
+
+% Voor literatuurverwijzingen zijn er twee belangrijke commando's:
+% \autocite{KEY} => (Auteur, jaartal) Gebruik dit als de naam van de auteur
+%   geen onderdeel is van de zin.
+% \textcite{KEY} => Auteur (jaartal)  Gebruik dit als de auteursnaam wel een
+%   functie heeft in de zin (bv. ``Uit onderzoek door Doll & Hill (1954) bleek
+%   ...'')
+%
+%Je mag gerust gebruik maken van subsecties in dit onderdeel.
+
+%---------- Methodologie ------------------------------------------------------
+\section{Methodologie}
+\label{sec:methodologie}
+Het plan is om een model te trainen dat afbeeldingen classificeert op basis van hun meest voorkomende imperfecties.
+
+Als eerste moeten we een pipeline bouwen met alle mogelijke correcties die je maar kan bedenken. Dus dat will zeggen correctie voor skewedness, noise, overbelichting en zo verder. Veel van deze correcties kunnen met niet veel code in python me behulp van openCV worden uitgeschreven. Nadien kunnen we deze pipeline 'at runtime' aanpassen met het resultaat van een classificatie. Dat brengt ons bij het volgende aspect van dit onderzoek, het neural network.
+
+Een neural network geeft als eindresultaat een vector terug met daarin de verschillende kansen. Vaak wordt er gewoon gekeken naar welke optie de hoogste kans heeft, dit wordt dan aanzien als de klasse waartoe het object behoort. In ons gevallen kan het heel goed zijn dat er meerdere fouten zijn op een afbeelding. Hiervoor gaan we dus gewoon kijken naar de kans per imperfectie. Hierna kunnen we enkel de fouten beschouwen waarbij de probaliteit boven een bepaalde waarde ligt.
+
+Om zo’n model te trainen heb je natuurlijk heel wat data nodig. Hiervoor zal ik online kijken. Om deze data aan te vullen is er ook de mogelijkheid om zelf samples te gaan genereren door bepaalde afbeeldingen te gaan bewerken met python en openCV. Zo kunnen we gemakkelijk deze 'skewedness' introduceren en tegelijk de afbeelding programmatisch labelen. Hetzelfde voor overbelichting, noise en blur. Op het eerste zicht zijn er genoeg datasets met tekst.
+Het model zelf zal zeer waarschijnlijk een convolutional neural network worden. 
+
+Een belangrijk component van deze bachelorproef is kijken naar de kwaliteit van zo’n zelfgemaakte oplossingen en de tijd, kost en complexiteit die hierbij komt kijkt. Vervolgens zal ik een vergelijkende studie maken met andere tools die reeds op de markt zijn om aan image pre-processing doen. Zo zit deze functionaliteit reeds ingebakken bij sommige OCR software. Het mogelijke struikelblok van deze studie zou zijn dat een neural network simpelweg te veel rekenkracht zou vereisen. Het is namelijk ook mogelijk om sommige van deze andere imperfecties zonder een neural network op te sporen.
+
+
+
+%(Hier beschrijf je hoe je van plan bent het onderzoek te voeren. Welke onderzoekstechniek ga je toepassen om elk van je onderzoeksvragen te beantwoorden? Gebruik je hiervoor experimenten, vragenlijsten, simulaties? Je beschrijft ook al welke tools je denkt hiervoor te gebruiken of te ontwikkelen.)
+
+%---------- Verwachte resultaten ----------------------------------------------
+\section{Verwachte resultaten}
+\label{sec:verwachte_resultaten}
+
+Een oplossingen maken voor het correct voorspellen welke fouten er in een afbeeldingen zitten, hierna op basis van deze voorspellingen bepaalde verbetering uitvoeren is dus de opgave. Als mijn model de fouten nauwkeuriger kan herkennen dan andere tools is het onderzoek een succes. Ook zal ik onder andere noteren hoeveel rekenkracht, mankracht enzovoort er nodig was om tot mijn oplossing te komen. Dit om een idee te geven van het kostenplaatje van zo'n oplossing. Dit samen met enkele grafieken die de accuracy van zo'n model plot tegenover de tijd en geld die er in kruipen. Ook zullen er enkele figures zijn om deze oplossingen te vergelijken met de concurrenten. Zo kunnen we het aantal woorden dat een OCR uit de afbeelding kan halen vergelijken tussen mijn oplossing en andere oplossingen die geen neural networks gebruiken.
+
+%Hier beschrijf je welke resultaten je verwacht. Als je metingen en simulaties uitvoert, kan je hier al mock-ups maken van de grafieken samen met de verwachte conclusies. Benoem zeker al je assen en de stukken van de grafiek die je gaat gebruiken. Dit zorgt ervoor dat je concreet weet hoe je je data gaat moeten structureren.
+
+%---------- Verwachte conclusies ----------------------------------------------
+\section{Verwachte conclusies}
+\label{sec:verwachte_conclusies}
+
+De verwachte conclusie hier is dat er wel degelijk een voordeel is aan het gebruiken van neural networks bij het pre-processen van een afbeelding voor OCR.
+Ook hopen we dat onze oplossing toch competitief is met de state of the art. Verder verwachten we op het einde van de dag dat we een goede pipeline kunnen bouwen die de accuracy van een OCR systeem aanzienlijk omhoog duwt.
+%Hier beschrijf je wat je verwacht uit je onderzoek, met de motivatie waarom. Het is \textbf{niet} erg indien uit je onderzoek andere resultaten en conclusies vloeien dan dat je hier beschrijft: het is dan juist interessant om te onderzoeken waarom jouw hypothesen niet overeenkomen met de resultaten.
+

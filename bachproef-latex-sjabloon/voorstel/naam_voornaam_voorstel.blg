@@ -1,0 +1,17 @@
+[0] Config.pm:311> INFO - This is Biber 2.16
+[0] Config.pm:314> INFO - Logfile is 'naam_voornaam_voorstel.blg'
+[135] biber-MSWIN32:340> INFO - === 
+[188] Biber.pm:415> INFO - Reading 'naam_voornaam_voorstel.bcf'
+[375] Biber.pm:952> INFO - Found 3 citekeys in bib section 0
+[393] Biber.pm:4340> INFO - Processing section 0
+[407] Biber.pm:4531> INFO - Looking for bibtex format file 'voorstel.bib' for section 0
+[482] bibtex.pm:1689> INFO - LaTeX decoding ...
+[495] bibtex.pm:1494> INFO - Found BibTeX data source 'voorstel.bib'
+[527] Utils.pm:395> WARN - Overwriting field 'year' with year value from field 'date' for entry 'Clark2002'
+[545] UCollate.pm:68> INFO - Overriding locale 'nl-NL' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[545] UCollate.pm:68> INFO - Overriding locale 'nl-NL' defaults 'variable = shifted' with 'variable = non-ignorable'
+[545] Biber.pm:4168> INFO - Sorting list 'apa/global//global/global' of type 'entry' with template 'apa' and locale 'nl-NL'
+[546] Biber.pm:4174> INFO - No sort tailoring available for locale 'nl-NL'
+[554] bbl.pm:654> INFO - Writing 'naam_voornaam_voorstel.bbl' with encoding 'UTF-8'
+[555] bbl.pm:757> INFO - Output to naam_voornaam_voorstel.bbl
+[556] Biber.pm:128> INFO - WARNINGS: 1
